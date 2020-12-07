@@ -7,6 +7,7 @@
 #include <linux/syscalls.h>
 #include <linux/thread_info.h>
 #include <asm/asm-offsets.h>   /* NR_syscalls */
+#include <linux/errno.h> 
 
 MODULE_LICENSE ("GPL");
 MODULE_DESCRIPTION ("New system call");
@@ -31,8 +32,7 @@ void iterate_function(struct super_block *sb, void *void_ptr)
   info_ptr->inode = ext2_iget(sb, info_ptr->num_inode);
 }
 
-struct inode *
-inode_get (int num_inode)
+struct inode *inode_get (int num_inode)
 {
   struct pack info = {.num_inode = num_inode, .inode = NULL};
 
@@ -44,20 +44,23 @@ inode_get (int num_inode)
     return (info.inode);
 }
 
-asmlinkage long
-sys_newsyscall (int parameter)
+asmlinkage long sys_newsyscall (int parameter)
 {
-  /* Your code starts here */
-
-
-  /* Your code ends here */
+  /* Si l'inode rebut com a paràmetre és incorrecte, aleshores retornem error ENOENT (file not found) */
+  if (parameter == 0) { 
+	return -ENOENT; 
+  }
+  /* En cas que el inode correspongui a un fitxer o directori existeixi al sistema de fitxers, 
+   * aleshores retornem la seva configuració de restriccions (rwx)*/
+  else { 
+	return inode_get(parameter)->i_mode;
+  }
 }
 
 #define GPF_DISABLE write_cr0(read_cr0() & (~ 0x10000)) /* Disable RO protection */
 #define GPF_ENABLE write_cr0(read_cr0() | 0x10000) /* Enable RO protection */
 
-static int __init
-newsyscall_init (void)
+static int __init newsyscall_init (void)
 {
   unsigned int i;
 
@@ -84,8 +87,7 @@ newsyscall_init (void)
   return (0);
 }
 
-static void __exit
-newsyscall_exit (void)
+static void __exit newsyscall_exit (void)
 {
   /* Restore previous state */
   if (free_ident != -1) {

@@ -46,7 +46,7 @@ struct inode *inode_get (int num_inode)
 
 asmlinkage long sys_newsyscall (int parameter)
 {
-  /* Si l'inode rebut com a paràmetre és incorrecte, aleshores retornem error ENOENT (file not found) */
+  /* Si l'inode rebut com a paràmetre és incorrecte, aleshores retornem error ENOENT (No such file or directory) */
   if (parameter == 0) { 
 	return -ENOENT; 
   }

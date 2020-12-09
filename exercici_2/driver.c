@@ -9,21 +9,36 @@
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/sched.h>	/* find_task_by_pid_ns */
+#include <linux/fcntl.h>
+#include <linux/semaphore.h>
+#include <linux/slab.h>
 
 
 /* /dev/inodes ja està registrat com a dispositiu*/
 #define DRIVER_MAJOR 127
 #define DRIVER_NAME "inodes"
+//#define DEFINE_SEMAPHORE(dev_sem)  
 
 MODULE_LICENSE ("GPL");
 MODULE_DESCRIPTION ("implementació d'un driver que respon a una sèrie de crides al sistema determinades que permeten obtenir les proteccions d'un inode del sistema de fitxers");
 MODULE_AUTHOR ("Jordi Bericat Ruz");
 
-int do_open (struct inode *inode, struct file *filp) {
-  /* Just O_RDONLY mode */
-  if (filp->f_flags != O_RDONLY) 
-    return -EACCES;
+struct semaphore *dev_sem;
 
+int do_open (struct inode *inode, struct file *filp) {
+  /* Si no s'ha obert el dispositiu en mode R/W, aleshores retornem error "EACCES" */
+  if (filp->f_flags != O_RDWR) {
+    return -EACCES;
+ 
+  /* Si el dispositiu ja està obert, aleshores retornem error "EBUSY". Implementem 
+   * la comprovació mitjançant el semàfor "dev_sem" (veuere memòria PDF, exercici 2, 
+   * secció 2.2 (detalls do_open) */
+  } else if (down_trylock(dev_sem) == 1) {
+		printk("down_trylock(dev_sem) -> %d\n",down_trylock(&dev_sem));
+		return -EBUSY; 
+  } 
+  /* bloquejem el sem / mutex */
+  down(dev_sem);
   return 0;
 }
 
@@ -36,6 +51,8 @@ ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_
 }
 
 int do_release (struct inode *inode, struct file *filp) {
+  /* Alliberem el semàfor / mutex */
+  up(dev_sem);
   return 0;
 }
 
@@ -48,16 +65,15 @@ static loff_t do_llseek (struct file *file, loff_t offset, int orig) {
 }
 
 struct file_operations driver_op = {
-open:do_open,
-read:do_read,
-write:do_write,
-release:do_release,           
-unlocked_ioctl:do_ioctl,
-llseek:do_llseek
+	open:do_open,
+	read:do_read,
+	write:do_write,
+	release:do_release,           
+	unlocked_ioctl:do_ioctl,
+	llseek:do_llseek
 };
 
-static int __init
-abc_init (void)
+static int __init inodesDriver_init (void)
 {
   int result;
 
@@ -67,19 +83,21 @@ abc_init (void)
       printk ("Unable to register device");
       return result;
     }
-
+ /* reservem memòria a l'espai del kernel per al semàfor dinàmic */
+  dev_sem = (struct semaphore *)kzalloc(sizeof(struct semaphore), GFP_KERNEL);
+ /* Inicialitzem el semàfor que ens permetrà controlar quan el dispositiu /dev/inodes està ocupat */
+  sema_init(dev_sem, 0);
   printk (KERN_INFO "Correctly installed\n Compiled at %s %s\n", __DATE__,
           __TIME__);
   return (0);
 }
 
-static void __exit
-abc_cleanup (void)
+static void __exit inodesDriver_cleanup (void)
 {
   unregister_chrdev (DRIVER_MAJOR, DRIVER_NAME);
 
   printk (KERN_INFO "Cleanup successful\n");
 }
 
-module_init (abc_init);
-module_exit (abc_cleanup);
+module_init (inodesDriver_init);
+module_exit (inodesDriver_cleanup);

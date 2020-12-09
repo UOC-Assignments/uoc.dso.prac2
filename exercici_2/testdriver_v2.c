@@ -28,21 +28,26 @@ main (int argc, char *argv[])
   srand (getpid ());
 
   /* Open device file O_WRONLY */
+  printf("ASSERT 1.1: Open device file in mode O_WRONLY\n");
   fd = open (DEVICE_NAME, O_WRONLY);
   assert (fd == -1);
   assert (errno == EACCES);
 
   /* Open device file O_RDONLY */
+  printf("ASSERT 1.2: Open device file in mode O_RDONLY\n");
   fd = open (DEVICE_NAME, O_RDONLY);
   assert (fd == -1);
   assert (errno == EACCES);
 
   /* Open device file */
+  printf("ASSERT 1.3: Open device file in mode O_RDWR\n");
   fd = open (DEVICE_NAME, O_RDWR);
   assert (fd > 0);
 
   /* Try to open again the device file */
+  printf("ASSERT 1.4: Trying to open again the device file\n");
   fd2 = open (DEVICE_NAME, O_RDWR);
+  //printf("Trying to open again the device file returns -> %d\n",fd2);
   assert (fd2 == -1);
   assert (errno == EBUSY);
 
@@ -53,7 +58,7 @@ main (int argc, char *argv[])
 
   /* Reading several files */
   for (i = 0; i < NUM_TESTS; i++)
-    {
+    {  
       /* Picks a filename index */
       nfile_idx = rand () % nfiles;
 

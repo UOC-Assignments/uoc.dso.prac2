@@ -47,7 +47,7 @@ struct inode *inode_get (int num_inode)
 asmlinkage long sys_newsyscall (int parameter)
 {
   /* Si l'inode rebut com a paràmetre és incorrecte, aleshores retornem error ENOENT (No such file or directory) */
-  if (parameter == 0) { 
+  if (parameter == 0) { //Afegir OR parameter == NULL ??
 	return -ENOENT; 
   }
   /* En cas que el inode correspongui a un fitxer o directori existeixi al sistema de fitxers, 

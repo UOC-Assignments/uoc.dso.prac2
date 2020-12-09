@@ -39,15 +39,18 @@ int do_open (struct inode *inode, struct file *filp) {
    * secció 2.2 (detalls do_open) */ 
   sem_status = down_trylock(dev_sem);
   if (sem_status == 0) {
-		printk("THE DEVICE FILE IS FREE SO WE CAN OPEN IT [ sem_status -> %d ]\n",sem_status);
+		//printk("THE DEVICE FILE IS FREE SO WE CAN OPEN IT [ sem_status -> %d ]\n",sem_status);
 		return 0;		
   } else {
-		printk("TRYING TO OPEN THE DEVICE FILE FOR SECOND TIME ->  [ sem_status -> %d ]\n",sem_status);
+		//printk("TRYING TO OPEN THE DEVICE FILE FOR SECOND TIME ->  [ sem_status -> %d ]\n",sem_status);
 		return -EBUSY; 
   }
 }
 
-ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
+ssize_t do_read (struct file * filp, char *buf, int num) {
+  if (num != 1) {
+	return -EINVAL;
+  }
   return 0;
 }
 

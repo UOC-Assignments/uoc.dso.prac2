@@ -23,7 +23,7 @@ MODULE_LICENSE ("GPL");
 MODULE_DESCRIPTION ("implementació d'un driver que respon a una sèrie de crides al sistema determinades que permeten obtenir les proteccions d'un inode del sistema de fitxers");
 MODULE_AUTHOR ("Jordi Bericat Ruz");
 
-struct semaphore *dev_sem;
+static struct semaphore dev_sem;
 
 int do_open (struct inode *inode, struct file *filp) {
 
@@ -37,7 +37,7 @@ int do_open (struct inode *inode, struct file *filp) {
   /* Si el dispositiu ja està obert, aleshores retornem error "EBUSY". Implementem 
    * la comprovació mitjançant el semàfor "dev_sem" (veuere memòria PDF, exercici 2, 
    * secció 2.2 (detalls do_open) */ 
-  sem_status = down_trylock(dev_sem);
+  sem_status = down_trylock(&dev_sem);
   if (sem_status == 0) {
 		//printk("THE DEVICE FILE IS FREE SO WE CAN OPEN IT [ sem_status -> %d ]\n",sem_status);
 		return 0;		
@@ -60,7 +60,7 @@ ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_
 
 int do_release (struct inode *inode, struct file *filp) {
   /* Alliberem el semàfor / mutex */
-  up(dev_sem);
+  up(&dev_sem);
   return 0;
 }
 
@@ -91,10 +91,8 @@ static int __init inodesDriver_init (void)
       printk ("Unable to register device");
       return result;
     }
-  /* reservem memòria a l'espai del kernel per al semàfor */
-  dev_sem = (struct semaphore *)kzalloc(sizeof(struct semaphore), GFP_KERNEL);
   /* Inicialitzem el semàfor que ens permetrà controlar quan el dispositiu /dev/inodes està ocupat */
-  sema_init(dev_sem, 1);
+  sema_init(&dev_sem, 1);
   //DEFINE_SEMAPHORE(dev_sem); /* NO SE PERQUÈ AMB EL SEMÀFOR ESTàTIC (BINARI) NO ACONSEGUEIXO FER EL LOCK, PERÒ AMB EL DINÀMIC SÍ...*/
   printk (KERN_INFO "Correctly installed\n Compiled at %s %s\n", __DATE__, __TIME__);
   return (0);

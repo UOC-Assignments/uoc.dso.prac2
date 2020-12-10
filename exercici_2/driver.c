@@ -105,16 +105,20 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
   /*if ((*f_pos + count) < sizeof (??????))
     real_read = count;
   else */
-    real_read = count; // o bé = sizeof (*f_pos)
+    real_read = count; // o bé = sizeof (*f_pos) .......
 
-  //printk("******* INODE (f_pos) = %d\n",f_pos);
+  printk("BREAKPOINT 4\n");
+
+  struct inode* inode = inode_get(*f_pos);
+  printk("******* INODE f_pos = %d\n",*f_pos);
+  printk("******* INODE i_mode = %o\n",inode->i_mode);
 
   /* Transfers data to user space */
-  k = raw_copy_to_user (buf, &inode_get(*f_pos)->i_mode, real_read);
+  k = raw_copy_to_user(buf, &inode->i_mode, sizeof(mode_t)); //Copiem al bufer la quantitat de bytes corresponents al tipus mode_t
   if (k!=0)
     return -EFAULT;
   
-  /* Updates file pointer */
+  /* Updates file pointer */ //AIXÒ REALMENT CREC QUE NO CAL, ES FEIA SERVIR A ABC PER A FER REOCRREGUTS (CREC)
   *f_pos += real_read;
 
   return real_read; 

@@ -83,45 +83,29 @@ int do_open (struct inode *inode, struct file *filp) { //AQUI EL paramatre inode
 
 ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 
-  loff_t real_read;
   int k;
 
-  printk("BREAKPOINT 1\n");
+  //printk("BREAKPOINT 1\n");
 
   /*Si intentem llegir una quantitat diferent a un byte, retornem error EINVAL */
   if (count != 1) {
 	return -EINVAL;
   }
 
-  printk("BREAKPOINT 2\n");
+  //printk("BREAKPOINT 2\n");
 
   /* If beyond end of file, returns 0 */
   /* if (*f_pos >= sizeof (?????))
     return 0; */
 
-  printk("BREAKPOINT 3\n");
-
-  /* Computes the real number of characters that can be read */
-  /*if ((*f_pos + count) < sizeof (??????))
-    real_read = count;
-  else */
-    real_read = count; // o bé = sizeof (*f_pos) .......
-
-  printk("BREAKPOINT 4\n");
-
-  struct inode* inode = inode_get(*f_pos);
-  printk("******* INODE f_pos = %d\n",*f_pos);
-  printk("******* INODE i_mode = %o\n",inode->i_mode);
+  //printk("BREAKPOINT 3\n");
 
   /* Transfers data to user space */
-  k = raw_copy_to_user(buf, &inode->i_mode, sizeof(mode_t)); //Copiem al bufer la quantitat de bytes corresponents al tipus mode_t
+  k = raw_copy_to_user(buf, &inode_get(*f_pos)->i_mode, sizeof(mode_t)); //Copiem al bufer la quantitat de bytes corresponents al tipus mode_t (proteccions inode)
   if (k!=0)
     return -EFAULT;
   
-  /* Updates file pointer */ //AIXÒ REALMENT CREC QUE NO CAL, ES FEIA SERVIR A ABC PER A FER REOCRREGUTS (CREC)
-  *f_pos += real_read;
-
-  return real_read; 
+  return count; //Ha de ser count o sizeof(mode_t)?
 }
 
 ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_pos) {

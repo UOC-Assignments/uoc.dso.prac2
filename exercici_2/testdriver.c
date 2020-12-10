@@ -64,6 +64,7 @@ main (int argc, char *argv[])
 
       /* Move pointer to our file */
       r = lseek(fd, buf.st_ino, SEEK_SET);
+	  printf("\nASSERTING lseek:  Move pointer to our file -> INODE %d\n",r);
       assert (r==buf.st_ino);
 
       /* Read data */

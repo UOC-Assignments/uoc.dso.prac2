@@ -156,6 +156,7 @@ int do_open (struct inode *inode, struct file *filp) {
 ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 	
 	int k;
+	struct inode* my_inode = inode_get(*f_pos);
 	
 	// 3.2.1 - If we try to read more than one inode (or nothing at all) on this   
 	//         read operation, then we return an EINVAL errno (invalid argument)
@@ -171,7 +172,6 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 	// 3.2.2 - If we are trying to retrieve an invalid inode, then we return an
 	//         ENOENT errno (no such file or directory)
 	
-	struct inode* my_inode = inode_get(*f_pos);
 	if (my_inode == NULL){
 		return -ENOENT;
 	} else {
@@ -208,35 +208,49 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_pos) {
 	
 	int k;
+	struct inode* my_inode = inode_get(*f_pos);
 	
-	/* El tercer paràmetre ha de valdre 1 -> Si intentem modificar més d'un inode 
-		* en una mateixa operació read (count != 1), retornem error EINVAL.
-	*/
+	// 3.3.1 - The third "do_write()" parameter must be 1. If not, this means
+	//         that we're trying to modify more than one inode in the same 
+	//         write() operation (in tht case we return an EINVAL errno (invalid 
+	//         argument).
 	
-	// 
-	if (count != 1) {
+	if (count != 1) 
 		return -EINVAL;
-	}
+		
+	// 3.3.2 - If we are trying to write on an invalid inode, then we return an
+	//         ENOENT errno (no such file or directory)
 	
-	/* Caller must check the specified block with access_ok before calling this function */
+	if (my_inode == NULL)
+		return -ENOENT;
 	
-	/* Abans de cridar la funció de transferència "copy_from_user", hem de comprovar 
-		* El bloc específicat amb "access_ok".
-	*/
+	// 3.3.3 - Caller must check the specified block with "access_ok" before 
+	//         calling the "copy_from_user" function
 	
-	/*if (!access_ok (VERIFY_WRITE, buf, sizeof(unsigned short)))
-	return -EFAULT;*/
+	if (!access_ok (VERIFY_WRITE, buf, sizeof(mode_t))) //potser ha de ser unsigned short en comptes de mode_t
+		return -EFAULT;
 	
-	/* Transfers data from user space */
-	//k = copy_from_user(???,buf,sizeof(unsigned short));	
+	// 3.3.4 - Now we transfer the protection data from user space 
 	
-	/* Si no s'han pogut copiar tots els bytes demanats, aleshores "copy_from_user" 
-		* retorna el nombre de bytes que no s'han copiat. En cas que la copia es 
-	* realitzi correctament, retorna 0 */
-	/*if k != 0
-		return -ERROR?;
-	*/
-	return 0;
+	k = copy_from_user(&my_inode->i_mode,buf,sizeof(mode_t));
+	
+	// 3.3.5 - If "copy_from_user" couldn't copy the whole set of requested 
+	//         bytes into kernel space, then the function returns the amount of 
+	//         bytes that were not transfered (so the "do_write" routine will 
+    //         return the -1 error code). On the contrary, if the function was
+	//         able to copy all the data retrieved from user space ("mode_t" 
+    //         bytes), then its return value will zero. In that case, the 
+	//         "do_write" routine will return the 1 success code.
+	
+	if (k != 0)
+		return -1;
+		
+	// 3.3.6 - Before leaving though, we shoud take into consideration that as 
+	//         a side effect of writing into the device's, we will have to
+	//         properly update its file descriptor R/W pointer:
+	
+	*f_pos += sizeof(my_inode);
+	return 1;
 }
 
 // 3.4 - close() device dependent operation implementation

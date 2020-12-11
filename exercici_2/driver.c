@@ -191,10 +191,9 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 	return -EFAULT;
 	
 	// 3.2.5 - As a side effect, the file R/W pointer needs to be updated before 
-	//         exiting the system call.
+	//         exiting the system call (see comment 3.3.6 for further reference).
 	
-	*f_pos += sizeof(my_inode);
-	
+	*f_pos += 1;
 	// 3.2.6 - Finally, since the inode pointed by *f_pos is a valid one, and we 
 	//         also have been able to read from kernel memory space succesfully, 
 	//         then we can leave this read syscall returning a success code (1)
@@ -227,7 +226,7 @@ ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_
 	// 3.3.3 - Caller must check the specified block with "access_ok" before 
 	//         calling the "copy_from_user" function
 	
-	if (!access_ok (VERIFY_WRITE, buf, sizeof(mode_t))) //potser ha de ser unsigned short en comptes de mode_t
+	if (!access_ok (VERIFY_WRITE, buf, sizeof(my_inode))) 
 		return -EFAULT;
 	
 	// 3.3.4 - Now we transfer the protection data from user space 
@@ -246,10 +245,13 @@ ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_
 		return -1;
 		
 	// 3.3.6 - Before leaving though, we shoud take into consideration that as 
-	//         a side effect of writing into the device's, we will have to
-	//         properly update its file descriptor R/W pointer:
+	//         a side effect of writing into the device, we will have to
+	//         properly update its file descriptor R/W pointer, so it refers to 
+	//         the next inode in the table. This way, we can perform lseek 
+	//         "SEEK_CUR" operations -that is, retrieve the current pointer 
+	//         position.
 	
-	*f_pos += sizeof(my_inode);
+	*f_pos += 1;
 	return 1;
 }
 

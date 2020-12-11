@@ -120,6 +120,11 @@ struct inode *inode_get (int num_inode)
 #                        3. DEVICE OPERATIONS IMPLEMENTATION                   #
 #                                                                              #
 ##############################################################################*/
+
+// 3.0 - The next routines will run implicitly atfer calling the following OS  
+//       system calls: open(), read(), write(), close(), lseek() ONLY when the
+//       /dev/inodes device is specified at the moment of obtaining the file 
+//       descriptor (we use the open() syscall to so).
 	
 // 3.1 - open() device dependent operation implementation 
 
@@ -159,9 +164,9 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 		return -EINVAL;
 	}
 		
-	/* TO-DO? -> If beyond end of file, returns 0 */
-	/* if (*f_pos >= sizeof (?????))
-	return 0; */
+	// 3.2.x - (TO-DO?) -> If beyond end of file, returns 0 */
+	//if (*f_pos >= sizeof(&filp))
+	//	return 0;
 		
 	// 3.2.2 - If we are trying to retrieve an invalid inode, then we return an
 	//         ENOENT errno (no such file or directory)
@@ -185,15 +190,14 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 	if (k!=0)
 	return -EFAULT;
 	
-	/* Actualitzem el punter de R/W */
-	// 3.2.5 - We update the file R/W pointer before exiting
-	*f_pos += sizeof(mode_t);
+	// 3.2.5 - As a side effect, the file R/W pointer needs to be updated before 
+	//         exiting the system call.
 	
-	/* com que el inode és vàlid i s'ha pogut llegir de la memòria, aleshores 
-		* retornem 1 (success code).
-	*/
+	*f_pos += sizeof(my_inode);
 	
-	// 3.2.6 - 
+	// 3.2.6 - Finally, since the inode pointed by *f_pos is a valid one, and we 
+	//         also have been able to read from kernel memory space succesfully, 
+	//         then we can leave this read syscall returning a success code (1)
 	
 	return 1; 
 	}

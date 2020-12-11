@@ -98,8 +98,9 @@ main (int argc, char *argv[])
 
     /* Modify protections */ 
     new_protections = rand() % 0777; 
+	printf("\nASSERT \"MODIFIY PROTECTIONS\" -> RANDOMLY GENERATED PROTECTIONS: %o\n",new_protections);
     r = write(fd, &new_protections, 1);
-    assert( r == 1);
+    assert( r == 1 );
       
     /* Get data */
     assert (stat (tmpfile, &buf) != -1);

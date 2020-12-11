@@ -52,7 +52,7 @@ _.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(
 #include <asm/unistd.h>
 #include <asm/uaccess.h>
 #include <linux/module.h>
-#include <linux/proc_fs.h> //AIXÒ CAL????
+//#include <linux/proc_fs.h> //AIXÒ CAL????
 #include <linux/sched.h>	/* find_task_by_pid_ns */
 #include <linux/fcntl.h> //AQUEST SOBRA
 #include <linux/semaphore.h>
@@ -165,40 +165,46 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 		return -EINVAL;
 	}
 		
-	// 3.2.x - (TO-DO?) -> If beyond end of file, returns 0 */
-	//if (*f_pos >= sizeof(&filp))
-	//	return 0;
+	// 3.2.2 - If beyond end of file, returns 0 
+	//
+	// SIZE = SUMA DE L'ADREÇA DEL PRIMER I DARRER ELEMENT DE L'ARRAY DE INODES OBERTS PEL PROCÉS INDICAT PEL FILE DESCRIPTOR
+	// PRIMER ELEMENT = filp 
+	// DARRER ELEMENT = ????
+	
+	if (*f_pos >= sizeof(SIZE)) 
+	return 0;
 		
-	// 3.2.2 - If we are trying to retrieve an invalid inode, then we return an
+	// 3.2.3 - If we are trying to retrieve an invalid inode, then we return an
 	//         ENOENT errno (no such file or directory)
 	
 	if (my_inode == NULL){
 		return -ENOENT;
 	} else {
 	
-	// 3.2.3 - We transfer the inode's protection data to the user space. More 
+	// 3.2.4 - We transfer the inode's protection data to the user space. More 
 	//         precisely, we do copy the amount of bytes corresponding to the 
 	//         "mode_t" type (the inode's protection data size) into the buffer 
 	//         allocated in user memory space.
 	
 	k = raw_copy_to_user(buf, &my_inode->i_mode, sizeof(mode_t)); 
 	
-	// 3.2.4 - If we refer an invalid memory address (e.g. out of the kernel 
+	// 3.2.5 - If we refer an invalid memory address (e.g. out of the kernel 
 	//         memory area where the process stack is allocated), then we return
 	//         an EFAULT errno (bad address). 
 	
 	if (k!=0)
 	return -EFAULT;
 	
-	// 3.2.5 - As a side effect, the file R/W pointer needs to be updated before 
+	// 3.2.6 - As a side effect, the file R/W pointer needs to be updated before 
 	//         exiting the system call (see comment 3.3.6 for further reference).
 	
-	*f_pos += 1;
-	// 3.2.6 - Finally, since the inode pointed by *f_pos is a valid one, and we 
+	*f_pos += count;
+	
+	// 3.2.7 - Finally, since the inode pointed by *f_pos is a valid one, and we 
 	//         also have been able to read from kernel memory space succesfully, 
 	//         then we can leave this read syscall returning a success code (1)
 	
-	return 1; 
+	return count; 
 	}
 }
 
@@ -251,8 +257,8 @@ ssize_t do_write (struct file * filp, const char *buf, size_t count, loff_t * f_
 	//         "SEEK_CUR" operations -that is, retrieve the current pointer 
 	//         position.
 	
-	*f_pos += 1;
-	return 1;
+	*f_pos += count;
+	return count;
 }
 
 // 3.4 - close() device dependent operation implementation
@@ -279,10 +285,10 @@ static loff_t do_llseek (struct file *file, loff_t offset, int orig)
 	
 	switch (orig)
     {
-		case SEEK_SET: //AIXÒ ÉS CORRECTE
+		case SEEK_SET: 
 		ret = offset;
 		break;
-		case SEEK_CUR: //AIXÒ S'HA DE PROVAR ENCARA
+		case SEEK_CUR: 
 		ret = file->f_pos + offset;
 		break;
 		default:
@@ -360,8 +366,12 @@ module_exit (inodesDriver_cleanup);
 #                                                                              #
 #                                 5. BIBLIOGRAPHY                              #
 #                                                                              #
-##############################################################################*/
+################################################################################
+
+     1. Examples provided into the DSO Practical Assignment #2:
+	 1.1. newsyscall.c (example 5)
+	 1.2. newsyscall2.c
+	 1.3. abc.c (example 6)
 
 
-
-
+*/

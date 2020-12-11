@@ -99,7 +99,7 @@ main (int argc, char *argv[])
     /* Modify protections */ 
     new_protections = rand() % 0777; 
     r = write(fd, &new_protections, 1);
-    assert( r == 1);
+    assert( r == 1 );
       
     /* Get data */
     assert (stat (tmpfile, &buf) != -1);

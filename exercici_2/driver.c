@@ -21,9 +21,8 @@
 #                                                                              #
 #  DESCRIPTION:                                                                #
 #                                                                              #
-#                                                                              #
-#  IMPLEMENTATION STRATEGY:                                                    #
-#                                                                              #
+#  Linux driver implementation that allows us to retrieve / modifiy the inodes #
+#  protection data from / of a device file (/dev/inodes)                       #
 #                                                                              #
 #  USAGE:                                                                      #
 #                                                                              #
@@ -169,7 +168,7 @@ ssize_t do_read (struct file * filp, char *buf, size_t count, loff_t * f_pos) {
 	// 3.2.3 - ERROR CHECK: If we are trying to retrieve an invalid inode, then 
 	//         we return an ENOENT errno (no such file or directory).
 	
-	if (my_inode == NULL)
+	if (my_inode == NULL || my_inode == 0 )
 		return -ENOENT;
 
 	// 3.2.4 - We transfer the inode's protection data to the user space. More 
@@ -363,6 +362,5 @@ module_exit (inodesDriver_cleanup);
 	 1.2. newsyscall2.c
 	 1.3. abc.c (example 6)
 	 2. "man 2 read" -> https://linux.die.net/man/2/read
-	 3. .........
 
 */

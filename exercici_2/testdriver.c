@@ -23,7 +23,6 @@ main (int argc, char *argv[])
   int fd, fd2;
   struct stat buf;
 
-
   /* Init random generator */
   srand (getpid ());
 

@@ -101,7 +101,7 @@ static int __init newsyscall_init (void)
       break;
 
   /* Found? */
-  if (i == NR_syscalls)
+  if (i == NR_syscalls) 
     {
       printk ("No free entry available");
       return (-1);

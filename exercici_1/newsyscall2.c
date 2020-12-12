@@ -1,6 +1,34 @@
-/*
- * New system call
- */
+/*##############################################################################
+#                                                                              #
+#                       UOC - Open University of Catalonia                     #
+#                                                                              #
+################################################################################
+
+################################################################################
+#                                                                              #
+#                         OPERATING SYSTEMS DESIGN (DSO)                       #
+#                            PRACTICAL ASSIGNMENT #2                           #
+#                                                                              #
+#                        STUDENT: Jordi Bericat Ruz                            #
+#                           TERM: Autumn 2020/21                               #
+#                       GIT REPO: UOC-Assignments/uoc.dso.prac2                #
+#                    FILE 1 OF 2: newsyscall2.c                                #
+#                        VERSION: 1.0                                          #
+#                                                                              #
+################################################################################
+
+################################################################################
+#                                                                              #
+#  DESCRIPTION:                                                                #
+#                                                                              #
+#  Linux system call implementation that allows us to retrieve the protection  #
+#  data related to the inode specified as a parameter                          #
+#                                                                              #
+################################################################################
+
+
+_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~"(_.~*/
+
 
 #include <asm/unistd.h>
 #include <linux/module.h>
@@ -46,12 +74,15 @@ struct inode *inode_get (int num_inode)
 
 asmlinkage long sys_newsyscall (int parameter)
 {
-  /* Si l'inode rebut com a paràmetre és incorrecte, aleshores retornem error ENOENT (No such file or directory) */
-  if (parameter == 0) { //Afegir OR parameter == NULL ??
+
+  // If the inode we got as a parameter is not valid, then we return an ENOENT 
+  // errno (no such file or directory)
+  if (parameter == 0) { 
 	return -ENOENT; 
   }
-  /* En cas que el inode correspongui a un fitxer o directori existeixi al sistema de fitxers, 
-   * aleshores retornem la seva configuració de restriccions (rwx)*/
+  
+  // If the inode exists, then we call the provided "inode_get" function in 
+  // order to retrieve the inode's protection data, so we can return that vaule.
   else { 
 	return inode_get(parameter)->i_mode;
   }
@@ -70,7 +101,7 @@ static int __init newsyscall_init (void)
       break;
 
   /* Found? */
-  if (i == NR_syscalls)
+  if (i == NR_syscalls) 
     {
       printk ("No free entry available");
       return (-1);
